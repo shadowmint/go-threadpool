@@ -1,0 +1,31 @@
+{
+  "name": "go-threadpool",
+  "version": "1.0.0",
+  "description": "threadpool",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shadowmint/go-threadpool.git"
+  },
+  "files": [
+    "index.js",
+    "scripts",
+    "src"
+  ],
+  "author": "douglas.linder@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shadowmint/go-threadpool/issues"
+  },
+  "homepage": "https://github.com/shadowmint/go-threadpool",
+  "scripts": {
+    "test": "go test -v ./src/ntoolkit/...",
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "dependencies": {
+    "go-assert": "github:shadowmint/go-assert#1.0.0",
+    "go-errors": "github:shadowmint/go-errors#1.0.0",
+    "mkdirp": "^0.5.1",
+    "ncp": "^2.0.0"
+  }
+}
