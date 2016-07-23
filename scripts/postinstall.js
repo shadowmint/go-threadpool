@@ -4,7 +4,7 @@ var ncp = require('ncp');
 
 // Paths
 var src = path.join(__dirname, '..', 'src');
-var dir = path.join(__dirname, '..', '..', '..', 'vendor', 'src');
+var dir = path.join(__dirname, '..', '..', '..', 'src', 'vendor');
 
 // Create folder if missing
 mkdirp(dir, function (err) {
