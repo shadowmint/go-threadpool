@@ -2,7 +2,6 @@ package threadpool_test
 
 import (
 	"ntoolkit/assert"
-	"ntoolkit/errors"
 	"ntoolkit/threadpool"
 	"testing"
 )
@@ -12,9 +11,9 @@ func TestRun(T *testing.T) {
 		pool := threadpool.New()
 		value := 0
 
-		T.Assert(pool.Run(func() { value += 1 }) == nil)
-
+		pool.Run(func() { value += 1 })
 		pool.Wait()
+
 		T.Assert(value == 1)
 	})
 }
@@ -26,32 +25,29 @@ func TestBusy(T *testing.T) {
 
 		value := 0
 
-		T.Assert(pool.Run(func() { value += 1 }) == nil)
-		T.Assert(pool.Run(func() { value += 1 }) == nil)
-		err := pool.Run(func() { value += 1 })
-
-		T.Assert(err != nil)
-		T.Assert(errors.Is(err, threadpool.ErrBusy{}))
+		pool.Run(func() { value += 1 })
+		pool.Run(func() { value += 1 })
+		pool.Run(func() { value += 1 })
 
 		pool.Wait()
-		T.Assert(value == 2)
+		T.Assert(value == 3)
 	})
 }
 
-func TestWaitNext(T *testing.T) {
+func TestRunAndWait(T *testing.T) {
 	assert.Test(T, func(T *assert.T) {
 		pool := threadpool.New()
 		pool.MaxThreads = 10
 
 		value := 0
 		procs := 0
-		hits := 0
 
-		for hits < 50 {
-			pool.WaitNext()
-			if err := pool.Run(func() { value += 1 }); err == nil {
-				hits++
-			}
+		inc := pool.Locker(func() {
+			value += 1
+		})
+
+		for i := 0; i < 50; i++ {
+			pool.Run(inc.Invoke)
 			active := pool.Active()
 			if active > procs {
 				procs = active
@@ -61,5 +57,43 @@ func TestWaitNext(T *testing.T) {
 		pool.Wait()
 		T.Assert(procs == 10)
 		T.Assert(value == 50)
+	})
+}
+
+func TestResolveAsync(T *testing.T) {
+	assert.Test(T, func(T *assert.T) {
+		pool := threadpool.New()
+		pool.MaxThreads = 10
+
+		resolved := 0
+		rejected := false
+
+		resolveToValue := pool.LockerWith(func(value interface{}) {
+			intValue, _ := value.(int)
+			resolved = intValue
+		})
+
+		rejectValue := pool.Locker(func() {
+			rejected = true
+		})
+
+		pool.Run(func() {
+			resolveToValue.InvokeWith(100)
+		})
+
+		pool.Wait()
+		T.Assert(resolved == 100)
+		T.Assert(rejected == false)
+
+		resolved = 0
+		rejected = false
+
+		pool.Run(func() {
+			rejectValue.Invoke()
+		})
+
+		pool.Wait()
+		T.Assert(resolved == 0)
+		T.Assert(rejected == true)
 	})
 }
